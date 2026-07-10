@@ -1,9 +1,15 @@
 import styled from 'styled-components'
+import ResourcesList from './components/ResourcesList/ResourcesList'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient()
 
 function App() {
   return (
     <AppShell>
-      <Message>Good luck!</Message>
+      <QueryClientProvider client={queryClient}>
+        <ResourcesList />
+      </QueryClientProvider>
     </AppShell>
   )
 }
@@ -13,11 +19,6 @@ const AppShell = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-`
-
-const Message = styled.h1`
-  font-size: 2.5rem;
-  color: ${({ theme }) => theme.colors.inkStrong};
 `
 
 export default App
