@@ -1,6 +1,8 @@
 import styled from 'styled-components'
-import ResourcesList from './components/ResourcesList/ResourcesList'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import MainLayout from './layouts/ResourceLayout'
+import { ToastContainer } from 'react-toastify'
 
 const queryClient = new QueryClient()
 
@@ -8,7 +10,14 @@ function App() {
   return (
     <AppShell>
       <QueryClientProvider client={queryClient}>
-        <ResourcesList />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainLayout />} />
+            <Route path="/resources/:resourceId/edit" element={<MainLayout />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+        <ToastContainer position="bottom-left" />
       </QueryClientProvider>
     </AppShell>
   )

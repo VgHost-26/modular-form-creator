@@ -3,6 +3,7 @@ import {
   useQuery,
   type UseMutationResult,
   type UseQueryResult,
+  useQueryClient,
 } from '@tanstack/react-query'
 import type {
   ResourceListResponse,
@@ -11,35 +12,37 @@ import type {
   ProvisioningResponse,
   CreateResourceInput,
 } from '../schemes'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import type {
   GetResourcesParams,
   UpdateResourceBasicInfoParams,
   UpdateResourceParams,
   UpdateResourceProjectDetailsParams,
 } from '../schemes/params'
+import { toast } from 'react-toastify'
 
 export const useGetResources = (
   params: GetResourcesParams,
 ): UseQueryResult<ResourceListResponse, ErrorResponse> => {
   return useQuery({
-    queryKey: ['resources', params],
-    queryFn: async () => {
-      const { data } = await axios.get<ResourceListResponse>('/api/resources', { params })
+    queryKey: ['resourcesList', params],
+    queryFn: async ({ signal }) => {
+      const { data } = await axios.get<ResourceListResponse>('/api/resources', {
+        params,
+        signal,
+      })
       return data
     },
   })
 }
 
 export const useGetResourceById = (
-  resourceId: number,
-): UseQueryResult<ResourceListResponse, ErrorResponse> => {
+  resourceId: string | number,
+): UseQueryResult<Resource, ErrorResponse> => {
   return useQuery({
-    queryKey: ['resources', resourceId],
+    queryKey: ['resource', resourceId],
     queryFn: async () => {
-      const { data } = await axios.get<ResourceListResponse>(
-        `/api/resources/${resourceId}`,
-      )
+      const { data } = await axios.get<Resource>(`/api/resources/${resourceId}`)
       return data
     },
   })
@@ -47,80 +50,159 @@ export const useGetResourceById = (
 
 export const useCreateResources = (
   params: CreateResourceInput,
-): UseMutationResult<Resource, ErrorResponse> => {
+): UseMutationResult<Resource, AxiosError<ErrorResponse>> => {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationKey: ['resources'],
     mutationFn: async () => {
       const { data } = await axios.post<Resource>('/api/resources', params)
       return data
     },
-  })
-}
-
-export const useUpdateResource = (
-  params: UpdateResourceParams,
-): UseMutationResult<Resource, ErrorResponse> => {
-  return useMutation({
-    mutationKey: ['resources', params._id],
-    mutationFn: async () => {
-      const { data } = await axios.put<Resource>(`/api/resources/${params._id}`, params)
-      return data
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['resourcesList'] })
+      toast.success('Resource created successfully.')
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || 'An error occurred while creating the resource.'
+      toast.error(`Failed to create resource. ${errorMessage}`)
     },
   })
 }
 
-export const useDeleteResource = (
-  resourceId: number,
-): UseMutationResult<Resource, ErrorResponse> => {
+// Avaiable only when resource is completed
+export const useUpdateResource = (): UseMutationResult<
+  Resource,
+  AxiosError<ErrorResponse>,
+  UpdateResourceParams
+> => {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationKey: ['resources', resourceId],
-    mutationFn: async () => {
+    mutationKey: ['updateResource'],
+    mutationFn: async (params: UpdateResourceParams) => {
+      const { data } = await axios.put<Resource>(
+        `/api/resources/${params.resourceId}`,
+        params,
+      )
+      return data
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['resource', variables.resourceId] })
+      toast.success('Resource updated successfully.')
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || 'An error occurred while updating the resource.'
+      toast.error(`Failed to update resource, ${errorMessage}`)
+    },
+  })
+}
+
+export const useDeleteResource = (): UseMutationResult<
+  Resource,
+  AxiosError<ErrorResponse>,
+  number
+> => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: ['deleteResources'],
+    mutationFn: async (resourceId: number) => {
       const { data } = await axios.delete<Resource>(`/api/resources/${resourceId}`)
       return data
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['resourcesList'] })
+      toast.success('Resource deleted successfully.')
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || 'An error occurred while deleting the resource.'
+      toast.error(`Failed to delete resource. ${errorMessage}`)
+    },
   })
 }
 
-export const useUpdateResourceBasicInfo = ({
-  id,
-  basicInfo,
-}: UpdateResourceBasicInfoParams): UseMutationResult<Resource, ErrorResponse> => {
+// Avaiable only when resource is NOT completed
+export const useUpdateResourceBasicInfo = (): UseMutationResult<
+  Resource,
+  AxiosError<ErrorResponse>,
+  UpdateResourceBasicInfoParams
+> => {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationKey: ['resources', id, 'basicInfo'],
-    mutationFn: async () => {
-      const { data } = await axios.put<Resource>(
-        `/api/resources/${id}/basic-info`,
+    mutationKey: ['updateResourceBasicInfo'],
+    mutationFn: async ({ resourceId, basicInfo }: UpdateResourceBasicInfoParams) => {
+      const { data } = await axios.patch<Resource>(
+        `/api/resources/${resourceId}/basic-info`,
         basicInfo,
       )
       return data
     },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['resource', variables.resourceId] })
+      toast.success('Resource basic info updated successfully.')
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || 'An error occurred while updating the resource.'
+      toast.error(`Failed to update resource, ${errorMessage}`)
+    },
   })
 }
-export const useUpdateResourceProjectDetails = ({
-  id,
-  projectDetails,
-}: UpdateResourceProjectDetailsParams): UseMutationResult<Resource, ErrorResponse> => {
+
+// Avaiable only when resource is NOT completed
+export const useUpdateResourceProjectDetails = (): UseMutationResult<
+  Resource,
+  AxiosError<ErrorResponse>,
+  UpdateResourceProjectDetailsParams
+> => {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationKey: ['resources', id, 'projectDetails'],
-    mutationFn: async () => {
-      const { data } = await axios.put<Resource>(
-        `/api/resources/${id}/project-details`,
+    mutationKey: ['updateResourceProjectDetails'],
+    mutationFn: async ({
+      resourceId,
+      projectDetails,
+    }: UpdateResourceProjectDetailsParams) => {
+      const { data } = await axios.patch<Resource>(
+        `/api/resources/${resourceId}/project-details`,
         projectDetails,
       )
       return data
     },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['resource', variables.resourceId] })
+      toast.success('Resource project details updated successfully.')
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || 'An error occurred while updating the resource.'
+      toast.error(`Failed to update resource, ${errorMessage}`)
+    },
   })
 }
-export const useUpdateProvisioning = (
-  resourceId: number,
-): UseMutationResult<ProvisioningResponse, ErrorResponse> => {
+export const useUpdateProvisioning = (): UseMutationResult<
+  ProvisioningResponse,
+  AxiosError<ErrorResponse>,
+  number
+> => {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationKey: ['resources', resourceId, 'provisioning'],
-    mutationFn: async () => {
-      const { data } = await axios.post<ProvisioningResponse>(
+    mutationKey: ['provisoning'],
+    mutationFn: async (resourceId: number) => {
+      const { data } = await axios.patch<ProvisioningResponse>(
         `/api/resources/${resourceId}/provisioning`,
       )
       return data
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['resourcesList'] })
+      queryClient.invalidateQueries({ queryKey: ['resource', variables] })
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || 'An error occurred while updating the resource.'
+      toast.error(`Failed to update resource, ${errorMessage}`)
     },
   })
 }

@@ -10,11 +10,11 @@ export interface GetResourcesParams {
 
 export type UpdateResourceParams = Resource
 export interface UpdateResourceBasicInfoParams {
-  id: string
+  resourceId: number
   basicInfo: BasicInfo
 }
 export interface UpdateResourceProjectDetailsParams {
-  id: string
+  resourceId: number
   projectDetails: ProjectDetails
 }
  
