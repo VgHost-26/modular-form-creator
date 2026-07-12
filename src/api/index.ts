@@ -38,7 +38,7 @@ export const useGetResources = (
 
 export const useGetResourceById = (
   resourceId: string | number,
-): UseQueryResult<Resource, ErrorResponse> => {
+): UseQueryResult<Resource, AxiosError<ErrorResponse>> => {
   return useQuery({
     queryKey: ['resource', resourceId],
     queryFn: async () => {

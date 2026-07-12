@@ -1,14 +1,12 @@
-import type { BasicInfo, ProjectDetails, Resource } from '.'
+import type { BasicInfo, ProjectDetails, Resource, ResourceStatus } from '.'
 
 export interface GetResourcesParams {
   page: number
   pageSize: number
-  status?: 'draft' | 'completed'
+  status?: ResourceStatus
   name?: string
   sortOrder: 'desc' | 'asc'
 }
-
-export type UpdateResourceParams = Resource
 export interface UpdateResourceBasicInfoParams {
   resourceId: number
   basicInfo: BasicInfo
@@ -17,4 +15,4 @@ export interface UpdateResourceProjectDetailsParams {
   resourceId: number
   projectDetails: ProjectDetails
 }
- 
+export type UpdateResourceParams = Resource

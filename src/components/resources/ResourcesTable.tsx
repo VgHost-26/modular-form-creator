@@ -16,7 +16,7 @@ const ResourcesTable = ({ resources, onRowClick }: Props) => {
 
   return (
     <Table>
-      <thead>
+      <Thead>
         <tr>
           <Th>Name</Th>
           <Th>Status</Th>
@@ -26,8 +26,8 @@ const ResourcesTable = ({ resources, onRowClick }: Props) => {
           <Th></Th>
           <Th></Th>
         </tr>
-      </thead>
-      <tbody>
+      </Thead>
+      <Tbody>
         {resources.map((resource) => (
           <Item key={resource.resourceId} onClick={() => onRowClick(resource.resourceId)}>
             <td title={resource.name}>{resource.name}</td>
@@ -88,7 +88,7 @@ const ResourcesTable = ({ resources, onRowClick }: Props) => {
             </td>
           </Item>
         ))}
-      </tbody>
+      </Tbody>
     </Table>
   )
 }
@@ -98,8 +98,17 @@ const Table = styled.table`
   width: 100%;
   min-width: 600px;
   table-layout: fixed;
+  height: 100%;
+  overflow-y: scroll;
 `
-
+const Thead = styled.thead`
+  position: sticky;
+  top: 0;
+  background-color: white;
+  border-bottom: 2px solid #aaa;
+  z-index: 20;
+`
+const Tbody = styled.tbody``
 const Th = styled.th`
   text-align: left;
   padding: 0.5rem;

@@ -57,122 +57,129 @@ const EditProjectDetails = ({
 
   return (
     <Module variant="elevated">
-      <h3>Project Details</h3>
-      <Grid>
-        <Input
-          label="Project Name"
-          value={draft.projectDetails.projectName}
-          onChange={(event) =>
-            setDraft((current) => ({
-              ...current,
-              projectDetails: {
-                ...current.projectDetails,
-                projectName: event.target.value,
-              },
-            }))
-          }
-          state={isBasicInfoComplete ? 'normal' : 'locked'}
-          helperText={
-            isBasicInfoComplete
-              ? draft.projectDetails.projectName
-                ? undefined
-                : 'No project name provided'
-              : 'Please complete the basic info section first.'
-          }
-        />
-        <Input
-          label="Budget"
-          value={draft.projectDetails.budget}
-          onChange={(event) =>
-            setDraft((current) => ({
-              ...current,
-              projectDetails: {
-                ...current.projectDetails,
-                budget: event.target.value,
-              },
-            }))
-          }
-          helperText={
-            isBasicInfoComplete
-              ? draft.projectDetails.budget
-                ? undefined
-                : 'No budget provided'
-              : 'Please complete the basic info section first.'
-          }
-          state={isBasicInfoComplete ? 'normal' : 'locked'}
-        />
-        <Select
-          label="Category"
-          options={CATEGORY_OPTIONS}
-          value={draft.projectDetails.category}
-          onChange={(event) =>
-            setDraft((current) => ({
-              ...current,
-              projectDetails: {
-                ...current.projectDetails,
-                category: event.target.value,
-              },
-            }))
-          }
-          helperText={
-            isBasicInfoComplete
-              ? draft.projectDetails.category
-                ? undefined
-                : 'No category provided'
-              : 'Please complete the basic info section first.'
-          }
-          state={isBasicInfoComplete ? 'normal' : 'locked'}
-        />
+      <Form
+        onSubmit={(e) => {
+          e.preventDefault()
+          handleSaveProjectDetails()
+        }}
+      >
+        <h3>Project Details</h3>
+        <Grid>
+          <Input
+            label="Project Name"
+            value={draft.projectDetails.projectName}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                projectDetails: {
+                  ...current.projectDetails,
+                  projectName: event.target.value,
+                },
+              }))
+            }
+            state={isBasicInfoComplete ? 'normal' : 'locked'}
+            helperText={
+              isBasicInfoComplete
+                ? draft.projectDetails.projectName
+                  ? undefined
+                  : 'No project name provided'
+                : 'Please complete the basic info section first.'
+            }
+          />
+          <Input
+            label="Budget"
+            value={draft.projectDetails.budget}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                projectDetails: {
+                  ...current.projectDetails,
+                  budget: event.target.value,
+                },
+              }))
+            }
+            helperText={
+              isBasicInfoComplete
+                ? draft.projectDetails.budget
+                  ? undefined
+                  : 'No budget provided'
+                : 'Please complete the basic info section first.'
+            }
+            state={isBasicInfoComplete ? 'normal' : 'locked'}
+          />
+          <Select
+            label="Category"
+            options={CATEGORY_OPTIONS}
+            value={draft.projectDetails.category}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                projectDetails: {
+                  ...current.projectDetails,
+                  category: event.target.value,
+                },
+              }))
+            }
+            helperText={
+              isBasicInfoComplete
+                ? draft.projectDetails.category
+                  ? undefined
+                  : 'No category provided'
+                : 'Please complete the basic info section first.'
+            }
+            state={isBasicInfoComplete ? 'normal' : 'locked'}
+          />
 
-        {/* NOTE: I'm not sure if this was intended but neither in the task description nor in the API specification
+          {/* NOTE: I'm not sure if this was intended but neither in the task description nor in the API specification
             it wasnt specified that "Options" fiels is actually Team Members which accept only specified string values
             and not ANY array of strings. I found the correct values in the backend code and later in the storybook example, 
             but at first I was a bit confused why my random strings gave me an error response.  */}
 
-        <CheckboxGroup
-          label="Team Members"
-          options={TEAM_OPTIONS}
-          value={draft.projectDetails.options}
-          onChange={(selectedOptions) =>
-            setDraft((current) => ({
-              ...current,
-              projectDetails: {
-                ...current.projectDetails,
-                options: selectedOptions,
-              },
-            }))
-          }
-          disabled={!isBasicInfoComplete}
-        />
-      </Grid>
-      <Footer>
-        <Button
-          style={{
-            width: 'fit-content',
-          }}
-          variant="secondary"
-          onClick={handleCancelModuleChanges}
-          disabled={!anyChangesProjectDetails}
-        >
-          Cancel project changes
-        </Button>
-        <Button
-          style={{
-            width: 'fit-content',
-          }}
-          onClick={handleSaveProjectDetails}
-          // disabled={!anyChangesProjectDetails || !isBasicInfoComplete}
-          state={
-            isBasicInfoComplete
-              ? anyChangesProjectDetails
-                ? 'normal'
-                : 'disabled'
-              : 'locked'
-          }
-        >
-          Save project changes
-        </Button>
-      </Footer>
+          <CheckboxGroup
+            label="Team Members"
+            options={TEAM_OPTIONS}
+            value={draft.projectDetails.options}
+            onChange={(selectedOptions) =>
+              setDraft((current) => ({
+                ...current,
+                projectDetails: {
+                  ...current.projectDetails,
+                  options: selectedOptions,
+                },
+              }))
+            }
+            disabled={!isBasicInfoComplete}
+          />
+        </Grid>
+        <Footer>
+          <Button
+            style={{
+              width: 'fit-content',
+            }}
+            variant="secondary"
+            onClick={handleCancelModuleChanges}
+            disabled={!anyChangesProjectDetails}
+          >
+            Cancel project changes
+          </Button>
+          <Button
+            style={{
+              width: 'fit-content',
+            }}
+            onClick={handleSaveProjectDetails}
+            // disabled={!anyChangesProjectDetails || !isBasicInfoComplete}
+            state={
+              isBasicInfoComplete
+                ? anyChangesProjectDetails
+                  ? 'normal'
+                  : 'disabled'
+                : 'locked'
+            }
+          >
+            Save project changes
+          </Button>
+        </Footer>
+      </Form>
     </Module>
   )
 }
@@ -181,10 +188,16 @@ const Module = styled(Card)`
   flex-direction: column;
   flex: 1;
 `
-
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: 2rem;
 `
 

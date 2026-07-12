@@ -162,12 +162,14 @@ const Module = styled(Card)`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
+  gap: 1rem;
   flex: 1;
 `
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: 2rem;
 `
 

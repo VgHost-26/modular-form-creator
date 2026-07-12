@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useGetResourceById } from '../../api'
 import ResourceEditor from './ResourceEditor'
+import styled from 'styled-components'
 
 const ResourceEditView = () => {
   const { resourceId } = useParams()
@@ -12,15 +13,23 @@ const ResourceEditView = () => {
   } = useGetResourceById(resourceId ? Number(resourceId) : NaN)
 
   if (!resourceId) {
-    return <div>Missing resource id</div>
+    return <Message>Missing resource id</Message>
   }
 
-  if (isLoading || !resource) {
-    return <div>Loading resource...</div>
+  if (isLoading) {
+    return (
+      <Message>
+        Loading resource...
+        <progress></progress>
+      </Message>
+    )
   }
 
-  if (error) {
-    return <div>Error loading resource: {error.message}</div>
+  if (error || !resource) {
+    if (error?.response?.status === 404) {
+      return <Message>Resource not found</Message>
+    }
+    return <div>Error loading resource, {error?.response?.data.message}</div>
   }
 
   return (
@@ -32,5 +41,13 @@ const ResourceEditView = () => {
     />
   )
 }
+
+const Message = styled.h2`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+`
 
 export default ResourceEditView

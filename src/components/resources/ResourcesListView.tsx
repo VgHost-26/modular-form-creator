@@ -111,21 +111,16 @@ const ResourcesListView = () => {
           />
         </div>
         {resources.length > 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              flexDirection: 'column',
-              flex: 1,
-            }}
-          >
-            <ResourcesTable
-              resources={resources}
-              onRowClick={(resourceId) => {
-                setInspectedResourceId(resourceId)
-                setIsDrawerOpen(true)
-              }}
-            />
+          <Content>
+            <TableScrollWrapper>
+              <ResourcesTable
+                resources={resources}
+                onRowClick={(resourceId) => {
+                  setInspectedResourceId(resourceId)
+                  setIsDrawerOpen(true)
+                }}
+              />
+            </TableScrollWrapper>
             {pagination && (
               <ResourcesPagination
                 pagination={pagination}
@@ -133,7 +128,7 @@ const ResourcesListView = () => {
                 onPageSizeChange={handlePageSizeChange}
               />
             )}
-          </div>
+          </Content>
         ) : (
           <Message>No resources found, let's create one!</Message>
         )}
@@ -148,6 +143,16 @@ const LayoutContainer = styled(Card)`
   justify-content: flex-start;
   gap: 0.25rem;
   flex: 1;
+`
+const TableScrollWrapper = styled.div`
+  min-height: 0;
+  overflow-y: auto;
+`
+const Content = styled.div`
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
 `
 const Header = styled.h1`
   font-size: 1.5rem;

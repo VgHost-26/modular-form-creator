@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import { Button, Card, Checkbox, Input } from '../../design-system'
 import styled from 'styled-components'
-import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
+import { ChevronDownIcon } from 'lucide-react'
 import { useDebounce } from '../../hooks/useDebounce'
 import type { Filters } from '../resources/ResourcesListView'
+import type { ResourceStatus } from '../../schemes'
 
 type Props = {
   filters: Filters
@@ -34,7 +35,7 @@ const ResourcesFilters = ({ filters, setFilters, defaultFilters }: Props) => {
     return JSON.stringify(filters) !== JSON.stringify(defaultFilters)
   }, [filters, defaultFilters])
 
-  const handleStatusChange = (_status: 'completed' | 'draft') => {
+  const handleStatusChange = (_status: ResourceStatus) => {
     const newStatus = status === _status ? undefined : _status
     setFilters((prev) => ({ ...prev, status: newStatus }))
   }
@@ -89,8 +90,13 @@ const ResourcesFilters = ({ filters, setFilters, defaultFilters }: Props) => {
             }}
             onClick={handleToggleSortOrder}
           >
-            Sort order: {sortOrder}{' '}
-            {sortOrder === 'desc' ? <ChevronDownIcon /> : <ChevronUpIcon />}
+            Sort order: {sortOrder}
+            <ChevronDownIcon
+              style={{
+                rotate: sortOrder === 'desc' ? '0deg' : '180deg',
+                transition: '.2s rotate',
+              }}
+            />
           </Button>
         </Card>
       </Popover>

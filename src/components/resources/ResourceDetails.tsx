@@ -33,7 +33,7 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
           <SubtleText>Resource #{resource.resourceId}</SubtleText>
         </div>
         <HeaderActions>
-          <Button variant="secondary" onClick={onEdit}>
+          <Button variant="secondary" size="small" onClick={onEdit}>
             Edit
           </Button>
           <Badge variant={getStatusVariant(resource.status)}>{resource.status}</Badge>
@@ -53,13 +53,14 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
           </Field>
         </Grid>
       </Section>
-
       <Section>
         <SectionTitle>Basic Info</SectionTitle>
         <Grid>
           <Field>
             <Label>Resource Name</Label>
-            <Value>{resource.basicInfo.resourceName || 'No resource name provided'}</Value>
+            <Value>
+              {resource.basicInfo.resourceName || 'No resource name provided'}
+            </Value>
           </Field>
           <Field>
             <Label>Owner</Label>
@@ -73,7 +74,9 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
             <Label>Priority</Label>
             <Value>
               {resource.basicInfo.priority ? (
-                <Badge variant={resource.basicInfo.priority === 'high' ? 'warning' : 'info'}>
+                <Badge
+                  variant={resource.basicInfo.priority === 'high' ? 'warning' : 'info'}
+                >
                   {resource.basicInfo.priority}
                 </Badge>
               ) : (
@@ -93,7 +96,9 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
         <Grid>
           <Field>
             <Label>Project Name</Label>
-            <Value>{resource.projectDetails.projectName || 'No project name provided'}</Value>
+            <Value>
+              {resource.projectDetails.projectName || 'No project name provided'}
+            </Value>
           </Field>
           <Field>
             <Label>Budget</Label>
