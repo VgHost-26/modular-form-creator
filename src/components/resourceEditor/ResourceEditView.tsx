@@ -1,8 +1,9 @@
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useGetResourceById } from '../../api'
 import ResourceEditor from './ResourceEditor'
 import styled from 'styled-components'
 import type { DetailsModes } from '../../schemes/models'
+import { Button } from '../../design-system'
 
 type Props = {
   mode: DetailsModes
@@ -16,8 +17,15 @@ const ResourceEditView = ({ mode }: Props) => {
     error,
   } = useGetResourceById(resourceId ? Number(resourceId) : NaN)
 
+  const navigate = useNavigate()
+
   if (!resourceId) {
-    return <Message>Missing resource id</Message>
+    return (
+      <Message>
+        Missing resource id
+        <Button onClick={() => navigate('/resources')}>Go Back</Button>
+      </Message>
+    )
   }
 
   if (isLoading) {
@@ -25,15 +33,26 @@ const ResourceEditView = ({ mode }: Props) => {
       <Message>
         Loading resource...
         <progress></progress>
+        <Button onClick={() => navigate('/resources')}>Go Back</Button>
       </Message>
     )
   }
 
   if (error || !resource) {
     if (error?.response?.status === 404) {
-      return <Message>Resource not found</Message>
+      return (
+        <Message>
+          Resource not found
+          <Button onClick={() => navigate('/resources')}>Go Back</Button>
+        </Message>
+      )
     }
-    return <div>Error loading resource, {error?.response?.data.message}</div>
+    return (
+      <Message>
+        Error loading resource, {error?.response?.data.message}
+        <Button onClick={() => navigate('/resources')}>Go Back</Button>
+      </Message>
+    )
   }
 
   return (
@@ -57,6 +76,7 @@ const Message = styled.h2`
   align-items: center;
   justify-content: center;
   flex: 1;
+  gap: 1rem;
 `
 
 export default ResourceEditView
