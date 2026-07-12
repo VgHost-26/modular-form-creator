@@ -1,13 +1,18 @@
 import { Controller, useFormContext, type FieldPath } from 'react-hook-form'
 import styled from 'styled-components'
-import { Input, Select, Button, Card } from '../../../design-system'
+import { Input, Select, Button, Card, Badge } from '../../../design-system'
 import type { BasicInfo, Resource } from '../../../schemes'
 import { useUpdateResource, useUpdateResourceBasicInfo } from '../../../api'
 import type { MasterFormValues } from '../ResourceEditor'
+import { isBasicInfoComplete } from '../../../utils/helpers'
+import { useNavigate } from 'react-router-dom'
+import type { DetailsModes } from '../../../schemes/models'
 
 type Props = {
   resource: Resource
   anyChangesBasicInfo: boolean
+  readonly?: boolean
+  mode: DetailsModes
 }
 
 const PRIORITY_OPTIONS = [
@@ -17,11 +22,19 @@ const PRIORITY_OPTIONS = [
   { value: 'high', label: 'High' },
 ]
 
-const EditBasicInfo = ({ resource, anyChangesBasicInfo }: Props) => {
+const EditBasicInfo = ({
+  resource,
+  anyChangesBasicInfo,
+  readonly = false,
+  mode,
+}: Props) => {
   const { resourceId, basicInfo, status } = resource
 
   const updateBasicInfo = useUpdateResourceBasicInfo()
   const updateResource = useUpdateResource()
+  const basicInfoCompleted = isBasicInfoComplete(basicInfo)
+
+  const navigate = useNavigate()
 
   const {
     control,
@@ -42,10 +55,11 @@ const EditBasicInfo = ({ resource, anyChangesBasicInfo }: Props) => {
           basicInfo: values,
         })
       } else {
-        updateBasicInfo.mutate({
+        await updateBasicInfo.mutateAsync({
           resourceId,
           basicInfo: values,
         })
+        navigate(`/resources/${resourceId}/project-details`)
       }
     }
   }
@@ -60,7 +74,14 @@ const EditBasicInfo = ({ resource, anyChangesBasicInfo }: Props) => {
   return (
     <Module variant="elevated">
       <FormContent>
-        <h3>Basic Info</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          Basic Info
+          {basicInfoCompleted ? (
+            <Badge variant="success">✓</Badge>
+          ) : (
+            <Badge variant="neutral">X</Badge>
+          )}
+        </h3>
         <Grid>
           <Input
             label="Resource Name"
@@ -73,14 +94,24 @@ const EditBasicInfo = ({ resource, anyChangesBasicInfo }: Props) => {
             control={control}
             name="basicInfo.owner"
             render={({ field }) => (
-              <Input label="Owner" {...field} error={errors.basicInfo?.owner?.message} />
+              <Input
+                label="Owner"
+                {...field}
+                error={errors.basicInfo?.owner?.message}
+                disabled={readonly}
+              />
             )}
           />
           <Controller
             control={control}
             name="basicInfo.email"
             render={({ field }) => (
-              <Input label="Email" {...field} error={errors.basicInfo?.email?.message} />
+              <Input
+                label="Email"
+                {...field}
+                error={errors.basicInfo?.email?.message}
+                disabled={readonly}
+              />
             )}
           />
           <Controller
@@ -92,6 +123,7 @@ const EditBasicInfo = ({ resource, anyChangesBasicInfo }: Props) => {
                 options={PRIORITY_OPTIONS}
                 {...field}
                 error={errors.basicInfo?.priority?.message}
+                disabled={readonly}
               />
             )}
           />
@@ -105,36 +137,39 @@ const EditBasicInfo = ({ resource, anyChangesBasicInfo }: Props) => {
                   multiline
                   {...field}
                   error={errors.basicInfo?.description?.message}
+                  disabled={readonly}
                 />
               )}
             />
           </div>
         </Grid>
-        <Footer>
-          <Button
-            type="button"
-            style={{
-              width: 'fit-content',
-            }}
-            variant="secondary"
-            onClick={handleCancelModuleChanges}
-            disabled={!anyChangesBasicInfo}
-          >
-            Cancel info changes
-          </Button>
-          <Button
-            type="button"
-            style={{
-              alignSelf: 'flex-end',
-              width: 'fit-content',
-              justifySelf: 'flex-end',
-            }}
-            onClick={handleSaveBasicInfo}
-            disabled={!anyChangesBasicInfo || updateBasicInfo.isPending}
-          >
-            {updateBasicInfo.isPending ? 'Saving...' : 'Save info changes'}
-          </Button>
-        </Footer>
+        {!readonly && mode !== 'edit' ? (
+          <Footer>
+            <Button
+              type="button"
+              style={{
+                width: 'fit-content',
+              }}
+              variant="secondary"
+              onClick={handleCancelModuleChanges}
+              disabled={!anyChangesBasicInfo}
+            >
+              Cancel info changes
+            </Button>
+            <Button
+              type="button"
+              style={{
+                alignSelf: 'flex-end',
+                width: 'fit-content',
+                justifySelf: 'flex-end',
+              }}
+              onClick={handleSaveBasicInfo}
+              disabled={!anyChangesBasicInfo || updateBasicInfo.isPending}
+            >
+              {updateBasicInfo.isPending ? 'Saving...' : 'Save info changes'}
+            </Button>
+          </Footer>
+        ) : null}
       </FormContent>
     </Module>
   )

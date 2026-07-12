@@ -1,6 +1,8 @@
 import { Badge, Button, Card } from '../../design-system'
 import type { Resource } from '../../schemes'
 import styled from 'styled-components'
+import { isProjectDetailsComplete, isBasicInfoComplete } from '../../utils/helpers'
+import { useNavigate } from 'react-router-dom'
 
 type Props = {
   resource: Resource
@@ -33,6 +35,10 @@ const getStatusVariant = (status: Resource['status']) => {
 const ResourceDetails = ({ resource, onEdit }: Props) => {
   const { resourceId, name, status, basicInfo, projectDetails, createdAt, updatedAt } =
     resource
+  const basicInfoComplete = isBasicInfoComplete(basicInfo)
+  const projectDetailsComplete = isProjectDetailsComplete(projectDetails)
+
+  const navigate = useNavigate()
   return (
     <>
       <Card
@@ -107,6 +113,14 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
               </Value>
             </Field>
           </Grid>
+          {!(basicInfoComplete && projectDetailsComplete) && (
+            <Button
+              size="small"
+              onClick={() => navigate(`/resources/${resourceId}/basic-info`)}
+            >
+              Edit Basic Info
+            </Button>
+          )}
         </Section>
 
         <Section>
@@ -139,9 +153,19 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
               </TeamMembersWrapper>
             </Field>
           </Grid>
+          {!projectDetailsComplete && basicInfoComplete ? (
+            <Button
+              size="small"
+              onClick={() => navigate(`/resources/${resourceId}/project-details`)}
+            >
+              Edit Project Details
+            </Button>
+          ) : null}
         </Section>
       </Card>
-      <Button onClick={onEdit}>Edit Resource</Button>
+      {projectDetailsComplete && basicInfoComplete && (
+        <Button onClick={onEdit}>Edit Resource</Button>
+      )}
     </>
   )
 }

@@ -1,4 +1,4 @@
-import type { Resource } from '../schemes'
+import type { BasicInfo, ProjectDetails, Resource } from '../schemes'
 
 export function arraysEqual(arr1: string[], arr2: string[]) {
   if (arr1.length !== arr2.length) return false
@@ -8,8 +8,31 @@ export function arraysEqual(arr1: string[], arr2: string[]) {
   return true
 }
 
+export function isBasicInfoComplete(basicInfo: BasicInfo) {
+  return (
+    basicInfo.resourceName &&
+    basicInfo.owner &&
+    basicInfo.email &&
+    basicInfo.description &&
+    basicInfo.priority
+  )
+}
+
+export function isProjectDetailsComplete(projectDetails: ProjectDetails) {
+  return (
+    projectDetails.projectName &&
+    projectDetails.budget &&
+    projectDetails.category &&
+    projectDetails.options.length > 0
+  )
+}
+
 export function checkResourceProgress(resource: Resource) {
-  if (!resource.basicInfo.email) return 0
-  if (resource.basicInfo.email && !resource.projectDetails.projectName) return 1
+  if (!isBasicInfoComplete(resource.basicInfo)) return 0
+  if (
+    isBasicInfoComplete(resource.basicInfo) &&
+    !isProjectDetailsComplete(resource.projectDetails)
+  )
+    return 1
   return 2
 }

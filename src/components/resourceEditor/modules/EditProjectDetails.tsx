@@ -1,13 +1,18 @@
 import styled from 'styled-components'
-import { Input, Select, CheckboxGroup, Button, Card } from '../../../design-system'
+import { Input, Select, CheckboxGroup, Button, Card, Badge } from '../../../design-system'
 import type { ProjectDetails, Resource } from '../../../schemes'
 import { useUpdateResource, useUpdateResourceProjectDetails } from '../../../api'
 import { Controller, useFormContext, type FieldPath } from 'react-hook-form'
 import type { MasterFormValues } from '../ResourceEditor'
+import { isBasicInfoComplete, isProjectDetailsComplete } from '../../../utils/helpers'
+import { useNavigate } from 'react-router-dom'
+import type { DetailsModes } from '../../../schemes/models'
 
 type Props = {
   resource: Resource
   anyChangesProjectDetails: boolean
+  readonly?: boolean
+  mode: DetailsModes
 }
 
 const CATEGORY_OPTIONS = [
@@ -18,7 +23,12 @@ const CATEGORY_OPTIONS = [
 ]
 const TEAM_OPTIONS = ['FE devs', 'BE devs', 'Designer', 'Data Eng', 'Product Owner']
 
-const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
+const EditProjectDetails = ({
+  resource,
+  anyChangesProjectDetails,
+  readonly = false,
+  mode,
+}: Props) => {
   const { resourceId, projectDetails, basicInfo, status } = resource
 
   const updateProjectDetails = useUpdateResourceProjectDetails()
@@ -32,7 +42,10 @@ const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
     formState: { errors },
   } = useFormContext<MasterFormValues>()
 
-  const isBasicInfoComplete = !!basicInfo.description
+  const basicInfoComplete = isBasicInfoComplete(basicInfo)
+  const projectDetailsComplete = isProjectDetailsComplete(projectDetails)
+
+  const navigate = useNavigate()
 
   const handleSaveProjectDetails = async () => {
     const isSectionValid = await trigger('projectDetails')
@@ -49,6 +62,7 @@ const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
           resourceId,
           projectDetails: values,
         })
+        navigate(`/`)
       }
     }
   }
@@ -63,7 +77,14 @@ const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
   return (
     <Module variant="elevated">
       <FormContent>
-        <h3>Project Details</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          Project Details
+          {projectDetailsComplete ? (
+            <Badge variant="success">✓</Badge>
+          ) : (
+            <Badge variant="neutral">X</Badge>
+          )}
+        </h3>
         <Grid>
           <Controller
             control={control}
@@ -72,7 +93,7 @@ const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
               <Input
                 label="Project Name"
                 {...field}
-                state={isBasicInfoComplete ? 'normal' : 'locked'}
+                state={!readonly ? (basicInfoComplete ? 'normal' : 'locked') : 'disabled'}
                 error={errors.projectDetails?.projectName?.message}
               />
             )}
@@ -85,9 +106,9 @@ const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
               <Input
                 label="Budget"
                 {...field}
-                state={isBasicInfoComplete ? 'normal' : 'locked'}
+                state={!readonly ? (basicInfoComplete ? 'normal' : 'locked') : 'disabled'}
                 helperText={
-                  isBasicInfoComplete
+                  basicInfoComplete
                     ? field.value
                       ? undefined
                       : 'No budget provided'
@@ -106,7 +127,7 @@ const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
                 label="Category"
                 options={CATEGORY_OPTIONS}
                 {...field}
-                state={isBasicInfoComplete ? 'normal' : 'locked'}
+                state={!readonly ? (basicInfoComplete ? 'normal' : 'locked') : 'disabled'}
                 error={errors.projectDetails?.category?.message}
               />
             )}
@@ -126,41 +147,43 @@ const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
                 options={TEAM_OPTIONS}
                 value={field.value || []}
                 onChange={field.onChange}
-                disabled={!isBasicInfoComplete}
+                disabled={!basicInfoComplete || readonly}
                 error={errors.projectDetails?.options?.message}
               />
             )}
           />
         </Grid>
-        <Footer>
-          <Button
-            type="button"
-            style={{
-              width: 'fit-content',
-            }}
-            variant="secondary"
-            onClick={handleCancelModuleChanges}
-            disabled={!anyChangesProjectDetails}
-          >
-            Cancel project changes
-          </Button>
-          <Button
-            type="button"
-            style={{
-              width: 'fit-content',
-            }}
-            onClick={handleSaveProjectDetails}
-            state={
-              isBasicInfoComplete
-                ? anyChangesProjectDetails
-                  ? 'normal'
-                  : 'disabled'
-                : 'locked'
-            }
-          >
-            {updateProjectDetails.isPending ? 'Saving...' : 'Save project changes'}
-          </Button>
-        </Footer>
+        {!readonly && mode !== 'edit' ? (
+          <Footer>
+            <Button
+              type="button"
+              style={{
+                width: 'fit-content',
+              }}
+              variant="secondary"
+              onClick={handleCancelModuleChanges}
+              disabled={!anyChangesProjectDetails}
+            >
+              Cancel project changes
+            </Button>
+            <Button
+              type="button"
+              style={{
+                width: 'fit-content',
+              }}
+              onClick={handleSaveProjectDetails}
+              state={
+                basicInfoComplete
+                  ? anyChangesProjectDetails
+                    ? 'normal'
+                    : 'disabled'
+                  : 'locked'
+              }
+            >
+              {updateProjectDetails.isPending ? 'Saving...' : 'Save project changes'}
+            </Button>
+          </Footer>
+        ) : null}
       </FormContent>
     </Module>
   )

@@ -1,11 +1,15 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useGetResourceById } from '../../api'
 import ResourceEditor from './ResourceEditor'
 import styled from 'styled-components'
+import type { DetailsModes } from '../../schemes/models'
 
-const ResourceEditView = () => {
+type Props = {
+  mode: DetailsModes
+}
+
+const ResourceEditView = ({ mode }: Props) => {
   const { resourceId } = useParams()
-  const navigate = useNavigate()
   const {
     data: resource,
     isLoading,
@@ -34,12 +38,7 @@ const ResourceEditView = () => {
 
   return (
     <Wrapper>
-      <ResourceEditor
-        key={JSON.stringify(resource)}
-        resource={resource}
-        onCancel={() => navigate('/')}
-        onSaved={() => navigate('/')}
-      />
+      <ResourceEditor key={JSON.stringify(resource)} resource={resource} mode={mode} />
     </Wrapper>
   )
 }

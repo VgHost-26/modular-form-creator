@@ -13,9 +13,24 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<ResourcesListView />} />
-            <Route path="/resources/:resourceId/edit" element={<ResourceEditView />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/resources" element={<ResourcesListView />} />
+            <Route
+              path="/resources/:resourceId"
+              element={<ResourceEditView mode="edit" />}
+            />
+            <Route
+              path="/resources/:resourceId/details"
+              element={<ResourceEditView mode="details" />}
+            />
+            <Route
+              path="/resources/:resourceId/basic-info"
+              element={<ResourceEditView mode="basic-info" />}
+            />
+            <Route
+              path="/resources/:resourceId/project-details"
+              element={<ResourceEditView mode="project-details" />}
+            />
+            <Route path="*" element={<Navigate to="/resources" replace />} />
           </Routes>
         </BrowserRouter>
         <ToastContainer position="bottom-left" />

@@ -8,8 +8,8 @@ import ResourcesPagination from './ResourcesPagination.tsx'
 import ResourceDetails from './ResourceDetails.tsx'
 import { useNavigate } from 'react-router-dom'
 import ResourcesFilters from '../specializedButtons/ResourcesFilters.tsx'
+import type { Filters } from '../../schemes/models.ts'
 
-export type Filters = GetResourcesParams
 const DEFAULT_FILTERS: Filters = {
   page: 1,
   pageSize: 10,
@@ -82,9 +82,7 @@ const ResourcesListView = () => {
           <ResourceDetails
             key={inspectedResourceDetails._id}
             resource={inspectedResourceDetails}
-            onEdit={() =>
-              navigate(`/resources/${inspectedResourceDetails.resourceId}/edit`)
-            }
+            onEdit={() => navigate(`/resources/${inspectedResourceDetails.resourceId}`)}
           />
         ) : (
           <div>Resource no longer exists</div>
@@ -114,7 +112,11 @@ const ResourcesListView = () => {
               value={newResourceName}
               onChange={(e) => setNewResourceName(e.target.value)}
             />
-            <Button onClick={handleCreateResource} disabled={!newResourceName.trim()}>
+            <Button
+              type="submit"
+              onClick={handleCreateResource}
+              disabled={!newResourceName.trim()}
+            >
               Create Resource
             </Button>
           </form>

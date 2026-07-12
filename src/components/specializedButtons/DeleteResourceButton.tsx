@@ -8,12 +8,16 @@ type Props = {
   resource: Resource
   variant?: 'primary' | 'secondary' | 'ghost'
   size?: 'small' | 'medium' | 'large'
-  onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
+  onDelete?: () => void
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
 }
-const DeleteResourceButton = ({ resource, ...props }: Props) => {
+const DeleteResourceButton = ({ resource, onDelete, ...props }: Props) => {
   const deleteResource = useDeleteResource()
   const handleDeleteResource = (resourceId: number) => {
     deleteResource.mutate(resourceId)
+    if (onDelete) {
+      onDelete()
+    }
   }
   return (
     <>

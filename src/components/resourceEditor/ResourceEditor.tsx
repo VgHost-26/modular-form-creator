@@ -14,6 +14,8 @@ import { FormProvider, useForm } from 'react-hook-form'
 import z from 'zod'
 import type { Resource } from '../../schemes'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from 'react-router-dom'
+import type { DetailsModes } from '../../schemes/models'
 
 const basicInfoSchema = z.object({
   resourceName: z.string().trim().min(1, 'Resource name is required'),
@@ -44,16 +46,29 @@ export type MasterFormValues = z.infer<typeof masterSchema>
 
 type Props = {
   resource: Resource
-  onCancel: () => void
-  onSaved: () => void
+  mode: DetailsModes
+}
+const getTitle = (mode: DetailsModes) => {
+  switch (mode) {
+    case 'basic-info':
+      return 'Edit Basic Info'
+    case 'project-details':
+      return 'Edit Project Details'
+    case 'details':
+      return 'Resource Details'
+    default:
+      return 'Edit Resource'
+  }
 }
 
-const ResourceEditor = ({ resource, onCancel, onSaved }: Props) => {
+const ResourceEditor = ({ resource, mode }: Props) => {
   const { resourceId, status, basicInfo, projectDetails } = resource
 
   const updateResource = useUpdateResource()
   const updateBasicInfo = useUpdateResourceBasicInfo()
   const updateProjectDetails = useUpdateResourceProjectDetails()
+
+  const navigate = useNavigate()
 
   const methods = useForm<MasterFormValues>({
     resolver: zodResolver(masterSchema),
@@ -77,29 +92,25 @@ const ResourceEditor = ({ resource, onCancel, onSaved }: Props) => {
      */
     if (status === 'completed') {
       await updateResource.mutateAsync({ ...resource, ...formValues })
-      onSaved()
+      navigate(`/`)
       return
     }
 
-    const promises = []
     if (anyChangesBasicInfo) {
-      promises.push(
-        updateBasicInfo.mutateAsync({ resourceId, basicInfo: formValues.basicInfo }),
-      )
+      await updateBasicInfo.mutateAsync({
+        resourceId,
+        basicInfo: formValues.basicInfo,
+      })
     }
     if (anyChangesProjectDetails) {
-      promises.push(
-        updateProjectDetails.mutateAsync({
-          resourceId,
-          projectDetails: formValues.projectDetails,
-        }),
-      )
+      await updateProjectDetails.mutateAsync({
+        resourceId,
+        projectDetails: formValues.projectDetails,
+      })
     }
-
-    if (promises.length > 0) {
-      await Promise.all(promises)
-    }
-    onSaved()
+  }
+  const handleCancel = () => {
+    navigate(`/`)
   }
 
   return (
@@ -111,12 +122,12 @@ const ResourceEditor = ({ resource, onCancel, onSaved }: Props) => {
           style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '1rem' }}
         >
           <Header>
-            <IconButton type="button" size="small" onClick={onCancel}>
+            <IconButton type="button" size="small" onClick={handleCancel}>
               <ChevronLeftIcon />
             </IconButton>
             <span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h2>Edit Resource</h2>
+                <h2>{getTitle(mode)}</h2>
                 <Badge variant={status === 'completed' ? 'success' : 'info'}>
                   {status}
                 </Badge>
@@ -131,34 +142,57 @@ const ResourceEditor = ({ resource, onCancel, onSaved }: Props) => {
                 alignItems: 'flex-end',
               }}
             >
+              {mode === 'details' && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => navigate(`/resources/${resourceId}`)}
+                >
+                  Edit
+                </Button>
+              )}
               <ProvisionButton resource={resource} />
-              <DeleteResourceButton resource={resource} variant="secondary" />
+              <DeleteResourceButton
+                resource={resource}
+                variant="secondary"
+                onDelete={() => navigate('/resources')}
+              />
             </span>
           </Header>
           <ModulesWrapper>
-            <EditBasicInfo
-              resource={resource}
-              anyChangesBasicInfo={anyChangesBasicInfo}
-            />
-            <EditProjectDetails
-              resource={resource}
-              anyChangesProjectDetails={anyChangesProjectDetails}
-            />
+            {mode !== 'project-details' && (
+              <EditBasicInfo
+                readonly={mode === 'details'}
+                resource={resource}
+                anyChangesBasicInfo={anyChangesBasicInfo}
+                mode={mode}
+              />
+            )}
+            {mode !== 'basic-info' && (
+              <EditProjectDetails
+                readonly={mode === 'details'}
+                resource={resource}
+                anyChangesProjectDetails={anyChangesProjectDetails}
+                mode={mode}
+              />
+            )}
           </ModulesWrapper>
-          <Footer>
-            <Button type="button" variant="secondary" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                updateResource.isPending ||
-                (!anyChangesBasicInfo && !anyChangesProjectDetails)
-              }
-            >
-              {updateResource.isPending ? 'Saving...' : 'Save all changes'}
-            </Button>
-          </Footer>
+          {mode === 'edit' && (
+            <Footer>
+              <Button type="button" variant="secondary" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  updateResource.isPending ||
+                  (!anyChangesBasicInfo && !anyChangesProjectDetails)
+                }
+              >
+                {updateResource.isPending ? 'Saving...' : 'Save all changes'}
+              </Button>
+            </Footer>
+          )}
         </form>
       </LayoutContainer>
     </FormProvider>

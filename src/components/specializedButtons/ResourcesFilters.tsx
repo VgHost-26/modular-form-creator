@@ -3,8 +3,8 @@ import { Button, Card, Checkbox, Input } from '../../design-system'
 import styled from 'styled-components'
 import { ChevronDownIcon } from 'lucide-react'
 import { useDebounce } from '../../hooks/useDebounce'
-import type { Filters } from '../resourcesList/ResourcesListView'
 import type { ResourceStatus } from '../../schemes'
+import type { Filters } from '../../schemes/models'
 
 type Props = {
   filters: Filters

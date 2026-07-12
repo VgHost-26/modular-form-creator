@@ -2,13 +2,46 @@ import { Badge, Button } from '../../design-system'
 import { type Resource } from '../../schemes'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
-import { checkResourceProgress } from '../../utils/helpers'
+import {
+  checkResourceProgress,
+  isBasicInfoComplete,
+  isProjectDetailsComplete,
+} from '../../utils/helpers'
 import ProvisionButton from '../specializedButtons/ProvisionButton'
 import DeleteResourceButton from '../specializedButtons/DeleteResourceButton'
 
 type Props = {
   resources: Resource[]
   onRowClick: (resourceId: number) => void
+}
+type DynamicButtonProps = {
+  resource: Resource
+  navigate: ReturnType<typeof useNavigate>
+}
+
+const DynamicButton = ({ navigate, resource }: DynamicButtonProps) => {
+  const basicInfoComplete = isBasicInfoComplete(resource.basicInfo)
+  const projectDetailsComplete = isProjectDetailsComplete(resource.projectDetails)
+
+  let value = 'Edit'
+  let path = `/resources/${resource.resourceId}`
+
+  switch (true) {
+    case !basicInfoComplete:
+      value = 'Edit basic info'
+      path = `/resources/${resource.resourceId}/basic-info`
+      break
+    case !projectDetailsComplete:
+      value = 'Edit project details'
+      path = `/resources/${resource.resourceId}/project-details`
+      break
+  }
+
+  return (
+    <Button variant="ghost" size="small" onClick={() => navigate(path)}>
+      {value}
+    </Button>
+  )
 }
 
 const ResourcesTable = ({ resources, onRowClick }: Props) => {
@@ -23,6 +56,7 @@ const ResourcesTable = ({ resources, onRowClick }: Props) => {
           <Th>Module Progress</Th>
           <Th>Created at</Th>
           <Th>Provision</Th>
+          <Th></Th>
           <Th></Th>
           <Th></Th>
         </tr>
@@ -72,11 +106,14 @@ const ResourcesTable = ({ resources, onRowClick }: Props) => {
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation()
-                  navigate(`/resources/${resource.resourceId}/edit`)
+                  navigate(`/resources/${resource.resourceId}/details`)
                 }}
               >
-                Edit
+                Details
               </Button>
+            </td>
+            <td>
+              <DynamicButton navigate={navigate} resource={resource} />
             </td>
             <td>
               <DeleteResourceButton
@@ -131,10 +168,13 @@ const Th = styled.th`
     width: 15%;
   }
 
-  &:nth-last-child(3) {
+  &:nth-last-child(3),
+  &:nth-last-child(4) {
     width: 125px;
   }
-  &:nth-last-child(2),
+  &:nth-last-child(2) {
+    width: 200px;
+  }
   &:nth-last-child(1) {
     width: 100px;
   }
