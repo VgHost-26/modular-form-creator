@@ -1,16 +1,13 @@
+import { Controller, useFormContext, type FieldPath } from 'react-hook-form'
 import styled from 'styled-components'
 import { Input, Select, Button, Card } from '../../design-system'
-import type { Resource } from '../../schemes'
-import { useUpdateResourceBasicInfo } from '../../api'
-import type { Dispatch, SetStateAction } from 'react'
+import type { BasicInfo, Resource } from '../../schemes'
+import { useUpdateResource, useUpdateResourceBasicInfo } from '../../api'
+import type { MasterFormValues } from '../resources/ResourceEditor'
 
 type Props = {
-  resourceId: number
   resource: Resource
-  draft: Resource
-  setDraft: Dispatch<SetStateAction<Resource>>
   anyChangesBasicInfo: boolean
-  onSaveAll: () => void
 }
 
 const PRIORITY_OPTIONS = [
@@ -20,110 +17,96 @@ const PRIORITY_OPTIONS = [
   { value: 'high', label: 'High' },
 ]
 
-const EditBasicInfo = ({
-  resourceId,
-  resource,
-  draft,
-  setDraft,
-  anyChangesBasicInfo,
-  onSaveAll,
-}: Props) => {
-  const updateBasicInfo = useUpdateResourceBasicInfo()
+const EditBasicInfo = ({ resource, anyChangesBasicInfo }: Props) => {
+  const { resourceId, basicInfo, status } = resource
 
-  const handleSaveBasicInfo = () => {
-    if (resource.status === 'completed') {
-      onSaveAll()
-      return
+  const updateBasicInfo = useUpdateResourceBasicInfo()
+  const updateResource = useUpdateResource()
+
+  const {
+    control,
+    trigger,
+    getValues,
+    resetField,
+    formState: { errors },
+  } = useFormContext<MasterFormValues>()
+
+  const handleSaveBasicInfo = async () => {
+    const isSectionValid = await trigger('basicInfo')
+
+    if (isSectionValid) {
+      const values = getValues('basicInfo') as BasicInfo
+      if (status === 'completed') {
+        updateResource.mutate({
+          ...resource,
+          basicInfo: values,
+        })
+      } else {
+        updateBasicInfo.mutate({
+          resourceId,
+          basicInfo: values,
+        })
+      }
     }
-    updateBasicInfo.mutate({
-      resourceId,
-      basicInfo: draft.basicInfo,
-    })
   }
 
   const handleCancelModuleChanges = () => {
-    setDraft((current) => ({
-      ...current,
-      basicInfo: resource.basicInfo,
-    }))
+    Object.keys(basicInfo).forEach((key) => {
+      const path = `basicInfo.${key}` as FieldPath<MasterFormValues>
+      resetField(path)
+    })
   }
 
   return (
     <Module variant="elevated">
-      <Form
-        onSubmit={(e) => {
-          e.preventDefault()
-          handleSaveBasicInfo()
-        }}
-      >
+      <FormContent>
         <h3>Basic Info</h3>
         <Grid>
           <Input
             label="Resource Name"
-            value={draft.basicInfo.resourceName}
+            value={basicInfo.resourceName}
             state="locked"
             helperText="Resource name cannot be changed."
           />
-          <Input
-            label="Owner"
-            value={draft.basicInfo.owner}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                basicInfo: {
-                  ...current.basicInfo,
-                  owner: event.target.value,
-                },
-              }))
-            }
-            helperText={draft.basicInfo.owner ? undefined : 'No owner provided'}
+
+          <Controller
+            control={control}
+            name="basicInfo.owner"
+            render={({ field }) => (
+              <Input label="Owner" {...field} error={errors.basicInfo?.owner?.message} />
+            )}
           />
-          <Input
-            label="Email"
-            value={draft.basicInfo.email}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                basicInfo: {
-                  ...current.basicInfo,
-                  email: event.target.value,
-                },
-              }))
-            }
-            helperText={draft.basicInfo.email ? undefined : 'No email provided'}
+          <Controller
+            control={control}
+            name="basicInfo.email"
+            render={({ field }) => (
+              <Input label="Email" {...field} error={errors.basicInfo?.email?.message} />
+            )}
           />
-          <Select
-            label="Priority"
-            value={draft.basicInfo.priority}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                basicInfo: {
-                  ...current.basicInfo,
-                  priority: event.target.value as Resource['basicInfo']['priority'],
-                },
-              }))
-            }
-            options={PRIORITY_OPTIONS}
-            helperText={draft.basicInfo.priority ? undefined : 'No priority set'}
+          <Controller
+            control={control}
+            name="basicInfo.priority"
+            render={({ field }) => (
+              <Select
+                label="Priority"
+                options={PRIORITY_OPTIONS}
+                {...field}
+                error={errors.basicInfo?.priority?.message}
+              />
+            )}
           />
           <div style={{ gridColumn: '1/-1' }}>
-            <Input
-              label="Description"
-              multiline
-              value={draft.basicInfo.description}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  basicInfo: {
-                    ...current.basicInfo,
-                    description: event.target.value,
-                  },
-                }))
-              }
-              helperText={
-                draft.basicInfo.description ? undefined : 'No description provided'
-              }
+            <Controller
+              control={control}
+              name="basicInfo.description"
+              render={({ field }) => (
+                <Input
+                  label="Description"
+                  multiline
+                  {...field}
+                  error={errors.basicInfo?.description?.message}
+                />
+              )}
             />
           </div>
         </Grid>
@@ -140,18 +123,19 @@ const EditBasicInfo = ({
             Cancel info changes
           </Button>
           <Button
-            type="submit"
+            type="button"
             style={{
               alignSelf: 'flex-end',
               width: 'fit-content',
               justifySelf: 'flex-end',
             }}
-            disabled={!anyChangesBasicInfo}
+            onClick={handleSaveBasicInfo}
+            disabled={!anyChangesBasicInfo || updateBasicInfo.isPending}
           >
-            Save info changes
+            {updateBasicInfo.isPending ? 'Saving...' : 'Save info changes'}
           </Button>
         </Footer>
-      </Form>
+      </FormContent>
     </Module>
   )
 }
@@ -159,7 +143,7 @@ const EditBasicInfo = ({
 const Module = styled(Card)`
   flex: 1;
 `
-const Form = styled.form`
+const FormContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;

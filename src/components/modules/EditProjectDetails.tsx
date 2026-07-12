@@ -1,16 +1,13 @@
 import styled from 'styled-components'
 import { Input, Select, CheckboxGroup, Button, Card } from '../../design-system'
-import type { Resource } from '../../schemes'
-import { useUpdateResourceProjectDetails } from '../../api'
-import { useMemo, type Dispatch, type SetStateAction } from 'react'
+import type { ProjectDetails, Resource } from '../../schemes'
+import { useUpdateResource, useUpdateResourceProjectDetails } from '../../api'
+import { Controller, useFormContext, type FieldPath } from 'react-hook-form'
+import type { MasterFormValues } from '../resources/ResourceEditor'
 
 type Props = {
-  resourceId: number
   resource: Resource
-  draft: Resource
-  setDraft: Dispatch<SetStateAction<Resource>>
   anyChangesProjectDetails: boolean
-  onSaveAll: () => void
 }
 
 const CATEGORY_OPTIONS = [
@@ -21,113 +18,98 @@ const CATEGORY_OPTIONS = [
 ]
 const TEAM_OPTIONS = ['FE devs', 'BE devs', 'Designer', 'Data Eng', 'Product Owner']
 
-const EditProjectDetails = ({
-  resourceId,
-  resource,
-  draft,
-  setDraft,
-  anyChangesProjectDetails,
-  onSaveAll: onUpdateAll,
-}: Props) => {
-  const updateProjectDetails = useUpdateResourceProjectDetails()
+const EditProjectDetails = ({ resource, anyChangesProjectDetails }: Props) => {
+  const { resourceId, projectDetails, basicInfo, status } = resource
 
-  const handleCancelModuleChanges = () => {
-    setDraft({ ...resource, projectDetails: { ...resource.projectDetails } })
+  const updateProjectDetails = useUpdateResourceProjectDetails()
+  const updateResource = useUpdateResource()
+
+  const {
+    control,
+    trigger,
+    getValues,
+    resetField,
+    formState: { errors },
+  } = useFormContext<MasterFormValues>()
+
+  const isBasicInfoComplete = !!basicInfo.description
+
+  const handleSaveProjectDetails = async () => {
+    const isSectionValid = await trigger('projectDetails')
+
+    if (isSectionValid) {
+      const values = getValues('projectDetails') as ProjectDetails
+      if (status === 'completed') {
+        updateResource.mutate({
+          ...resource,
+          projectDetails: values,
+        })
+      } else {
+        updateProjectDetails.mutate({
+          resourceId,
+          projectDetails: values,
+        })
+      }
+    }
   }
 
-  const handleSaveProjectDetails = () => {
-    if (resource.status === 'completed') {
-      onUpdateAll()
-      return
-    }
-    updateProjectDetails.mutate({
-      resourceId,
-      projectDetails: draft.projectDetails,
+  const handleCancelModuleChanges = () => {
+    Object.keys(projectDetails).forEach((key) => {
+      const path = `projectDetails.${key}` as FieldPath<MasterFormValues>
+      resetField(path)
     })
   }
 
-  const isBasicInfoComplete = useMemo(() => {
-    return !!(
-      resource.basicInfo.description &&
-      resource.basicInfo.email &&
-      resource.basicInfo.owner &&
-      resource.basicInfo.priority
-    )
-  }, [resource.basicInfo])
-
   return (
     <Module variant="elevated">
-      <Form
-        onSubmit={(e) => {
-          e.preventDefault()
-          handleSaveProjectDetails()
-        }}
-      >
+      <FormContent>
         <h3>Project Details</h3>
         <Grid>
-          <Input
-            label="Project Name"
-            value={draft.projectDetails.projectName}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                projectDetails: {
-                  ...current.projectDetails,
-                  projectName: event.target.value,
-                },
-              }))
-            }
-            state={isBasicInfoComplete ? 'normal' : 'locked'}
-            helperText={
-              isBasicInfoComplete
-                ? draft.projectDetails.projectName
-                  ? undefined
-                  : 'No project name provided'
-                : 'Please complete the basic info section first.'
-            }
+          <Controller
+            control={control}
+            name="projectDetails.projectName"
+            render={({ field }) => (
+              <Input
+                label="Project Name"
+                {...field}
+                state={isBasicInfoComplete ? 'normal' : 'locked'}
+                error={errors.projectDetails?.projectName?.message}
+              />
+            )}
           />
-          <Input
-            label="Budget"
-            value={draft.projectDetails.budget}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                projectDetails: {
-                  ...current.projectDetails,
-                  budget: event.target.value,
-                },
-              }))
-            }
-            helperText={
-              isBasicInfoComplete
-                ? draft.projectDetails.budget
-                  ? undefined
-                  : 'No budget provided'
-                : 'Please complete the basic info section first.'
-            }
-            state={isBasicInfoComplete ? 'normal' : 'locked'}
+
+          <Controller
+            control={control}
+            name="projectDetails.budget"
+            render={({ field }) => (
+              <Input
+                label="Budget"
+                {...field}
+                state={isBasicInfoComplete ? 'normal' : 'locked'}
+                helperText={
+                  isBasicInfoComplete
+                    ? field.value
+                      ? undefined
+                      : 'No budget provided'
+                    : 'Please complete the basic info section first.'
+                }
+                error={errors.projectDetails?.budget?.message}
+              />
+            )}
           />
-          <Select
-            label="Category"
-            options={CATEGORY_OPTIONS}
-            value={draft.projectDetails.category}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                projectDetails: {
-                  ...current.projectDetails,
-                  category: event.target.value,
-                },
-              }))
-            }
-            helperText={
-              isBasicInfoComplete
-                ? draft.projectDetails.category
-                  ? undefined
-                  : 'No category provided'
-                : 'Please complete the basic info section first.'
-            }
-            state={isBasicInfoComplete ? 'normal' : 'locked'}
+
+          <Controller
+            control={control}
+            name="projectDetails.category"
+            render={({ field }) => (
+              <Select
+                label="Category"
+                options={CATEGORY_OPTIONS}
+                {...field}
+                state={isBasicInfoComplete ? 'normal' : 'locked'}
+                error={errors.projectDetails?.category?.message}
+              />
+            )}
           />
 
           {/* NOTE: I'm not sure if this was intended but neither in the task description nor in the API specification
@@ -135,24 +117,24 @@ const EditProjectDetails = ({
             and not ANY array of strings. I found the correct values in the backend code and later in the storybook example, 
             but at first I was a bit confused why my random strings gave me an error response.  */}
 
-          <CheckboxGroup
-            label="Team Members"
-            options={TEAM_OPTIONS}
-            value={draft.projectDetails.options}
-            onChange={(selectedOptions) =>
-              setDraft((current) => ({
-                ...current,
-                projectDetails: {
-                  ...current.projectDetails,
-                  options: selectedOptions,
-                },
-              }))
-            }
-            disabled={!isBasicInfoComplete}
+          <Controller
+            control={control}
+            name="projectDetails.options"
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Team Members"
+                options={TEAM_OPTIONS}
+                value={field.value || []}
+                onChange={field.onChange}
+                disabled={!isBasicInfoComplete}
+                error={errors.projectDetails?.options?.message}
+              />
+            )}
           />
         </Grid>
         <Footer>
           <Button
+            type="button"
             style={{
               width: 'fit-content',
             }}
@@ -163,11 +145,11 @@ const EditProjectDetails = ({
             Cancel project changes
           </Button>
           <Button
+            type="button"
             style={{
               width: 'fit-content',
             }}
             onClick={handleSaveProjectDetails}
-            // disabled={!anyChangesProjectDetails || !isBasicInfoComplete}
             state={
               isBasicInfoComplete
                 ? anyChangesProjectDetails
@@ -176,10 +158,10 @@ const EditProjectDetails = ({
                 : 'locked'
             }
           >
-            Save project changes
+            {updateProjectDetails.isPending ? 'Saving...' : 'Save project changes'}
           </Button>
         </Footer>
-      </Form>
+      </FormContent>
     </Module>
   )
 }
@@ -188,7 +170,7 @@ const Module = styled(Card)`
   flex-direction: column;
   flex: 1;
 `
-const Form = styled.form`
+const FormContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;

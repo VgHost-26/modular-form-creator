@@ -17,6 +17,7 @@ const ProvisionButton = ({ resource, onClick, ...props }: Props) => {
   }
   return (
     <Button
+      type="button"
       {...props}
       title={
         resource.status === 'completed'

@@ -18,6 +18,7 @@ const DeleteResourceButton = ({ resource, ...props }: Props) => {
   return (
     <>
       <Button
+        type="button"
         {...props}
         popoverTarget={`delete-popover-${resource.resourceId}`}
         style={{ color: theme.colors.warning }}
@@ -34,6 +35,7 @@ const DeleteResourceButton = ({ resource, ...props }: Props) => {
             }}
           >
             <Button
+              type="button"
               size="small"
               variant="secondary"
               popoverTargetAction="hide"
@@ -43,6 +45,7 @@ const DeleteResourceButton = ({ resource, ...props }: Props) => {
               No
             </Button>
             <Button
+              type="button"
               size="small"
               variant="primary"
               popoverTargetAction="hide"

@@ -1,18 +1,46 @@
-import { useMemo, useState } from 'react'
 import { Badge, Button, Card, IconButton } from '../../design-system'
 import {
   useUpdateResource,
   useUpdateResourceBasicInfo,
   useUpdateResourceProjectDetails,
 } from '../../api'
-import type { Resource } from '../../schemes'
 import styled from 'styled-components'
-import { arraysEqual } from '../../utils/helpers'
 import { ChevronLeftIcon } from 'lucide-react'
 import ProvisionButton from '../specializedButtons/ProvisionButton'
 import DeleteResourceButton from '../specializedButtons/DeleteResourceButton'
 import EditBasicInfo from '../modules/EditBasicInfo'
 import EditProjectDetails from '../modules/EditProjectDetails'
+import { FormProvider, useForm } from 'react-hook-form'
+import z from 'zod'
+import type { Resource } from '../../schemes'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const basicInfoSchema = z.object({
+  resourceName: z.string().trim().min(1, 'Resource name is required'),
+  owner: z.string().trim().min(1, 'Owner is required'),
+  email: z.email('Enter a valid email address'),
+  priority: z.enum(['low', 'medium', 'high']),
+  description: z.string().trim().min(1, 'Description is required'),
+})
+
+const projectDetailsSchema = z.object({
+  projectName: z.string().trim().min(1, 'Project name is required'),
+  budget: z
+    .string()
+    .trim()
+    .min(1, 'Budget is required')
+    .max(10, 'Be realistic')
+    .regex(/^\d+$/, 'Budget must be a number'),
+  category: z.string().trim().min(1, 'Category is required'),
+  options: z.array(z.string()).min(1, 'Select at least one team member'),
+})
+
+const masterSchema = z.object({
+  basicInfo: basicInfoSchema,
+  projectDetails: projectDetailsSchema,
+})
+
+export type MasterFormValues = z.infer<typeof masterSchema>
 
 type Props = {
   resource: Resource
@@ -21,109 +49,119 @@ type Props = {
 }
 
 const ResourceEditor = ({ resource, onCancel, onSaved }: Props) => {
-  const [draft, setDraft] = useState<Resource>(resource)
-  const resourceId = resource.resourceId
+  const { resourceId, status, basicInfo, projectDetails } = resource
 
   const updateResource = useUpdateResource()
   const updateBasicInfo = useUpdateResourceBasicInfo()
   const updateProjectDetails = useUpdateResourceProjectDetails()
 
-  const anyChangesBasicInfo = useMemo(() => {
-    return JSON.stringify(draft.basicInfo) !== JSON.stringify(resource.basicInfo)
-  }, [draft.basicInfo, resource.basicInfo])
+  const methods = useForm<MasterFormValues>({
+    resolver: zodResolver(masterSchema),
+    defaultValues: {
+      basicInfo,
+      projectDetails,
+    },
+    mode: 'onSubmit',
+  })
+  const {
+    formState: { dirtyFields },
+  } = methods
 
-  const anyChangesProjectDetails = useMemo(() => {
-    return (
-      draft.projectDetails.projectName !== resource.projectDetails.projectName ||
-      draft.projectDetails.budget !== resource.projectDetails.budget ||
-      draft.projectDetails.category !== resource.projectDetails.category ||
-      !arraysEqual(draft.projectDetails.options, resource.projectDetails.options)
-    )
-  }, [draft, resource])
+  const anyChangesBasicInfo = !!dirtyFields.basicInfo
+  const anyChangesProjectDetails = !!dirtyFields.projectDetails
 
-  const handleSaveAll = async () => {
-    /* When Provisioned use PUT othervise PATCH separatly to not confuse the user
-     with different behavior in the same form */
-    if (resource.status === 'completed') {
-      await updateResource.mutateAsync(draft)
+  const handleSaveAll = async (formValues: MasterFormValues) => {
+    /* 
+    When Provisioned use PUT othervise PATCH separatly to not confuse the user
+    with different behavior in the same form 
+     */
+    if (status === 'completed') {
+      await updateResource.mutateAsync({ ...resource, ...formValues })
       onSaved()
       return
     }
+
+    const promises = []
     if (anyChangesBasicInfo) {
-      await updateBasicInfo.mutateAsync({ resourceId, basicInfo: draft.basicInfo })
+      promises.push(
+        updateBasicInfo.mutateAsync({ resourceId, basicInfo: formValues.basicInfo }),
+      )
     }
     if (anyChangesProjectDetails) {
-      await updateProjectDetails.mutateAsync({
-        resourceId,
-        projectDetails: draft.projectDetails,
-      })
+      promises.push(
+        updateProjectDetails.mutateAsync({
+          resourceId,
+          projectDetails: formValues.projectDetails,
+        }),
+      )
+    }
+
+    if (promises.length > 0) {
+      await Promise.all(promises)
     }
     onSaved()
   }
 
-  // TODO: add fields validation before saving
-
   return (
-    <LayoutContainer variant="elevated">
-      <Header>
-        <IconButton size="small" onClick={onCancel}>
-          <ChevronLeftIcon />
-        </IconButton>
-        <span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h2>Edit Resource</h2>
-            <Badge variant={resource.status === 'completed' ? 'success' : 'info'}>
-              {resource.status}
-            </Badge>
-          </span>
-          <p>Resource #{resource.resourceId}</p>
-        </span>
-        <span
-          style={{
-            marginLeft: 'auto',
-            display: 'flex',
-            gap: '0.5rem',
-            alignItems: 'flex-end',
-          }}
+    <FormProvider {...methods}>
+      <LayoutContainer variant="elevated">
+        <form
+          noValidate
+          onSubmit={methods.handleSubmit(handleSaveAll)}
+          style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '1rem' }}
         >
-          <ProvisionButton resource={resource} />
-          <DeleteResourceButton resource={resource} variant="secondary" />
-        </span>
-      </Header>
-      <ModulesWrapper>
-        <EditBasicInfo
-          resourceId={resourceId}
-          resource={resource}
-          draft={draft}
-          setDraft={setDraft}
-          anyChangesBasicInfo={anyChangesBasicInfo}
-          onSaveAll={handleSaveAll}
-        />
-        <EditProjectDetails
-          resourceId={resourceId}
-          resource={resource}
-          draft={draft}
-          setDraft={setDraft}
-          anyChangesProjectDetails={anyChangesProjectDetails}
-          onSaveAll={handleSaveAll}
-        />
-      </ModulesWrapper>
-      <Footer>
-        <Button variant="secondary" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSaveAll}
-          // TODO: hanlde partial save for first module
-          disabled={
-            updateResource.isPending ||
-            (!anyChangesBasicInfo && !anyChangesProjectDetails)
-          }
-        >
-          {updateResource.isPending ? 'Saving...' : 'Save all changes'}
-        </Button>
-      </Footer>
-    </LayoutContainer>
+          <Header>
+            <IconButton type="button" size="small" onClick={onCancel}>
+              <ChevronLeftIcon />
+            </IconButton>
+            <span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h2>Edit Resource</h2>
+                <Badge variant={status === 'completed' ? 'success' : 'info'}>
+                  {status}
+                </Badge>
+              </span>
+              <p>Resource #{resourceId}</p>
+            </span>
+            <span
+              style={{
+                marginLeft: 'auto',
+                display: 'flex',
+                gap: '0.5rem',
+                alignItems: 'flex-end',
+              }}
+            >
+              <ProvisionButton resource={resource} />
+              <DeleteResourceButton resource={resource} variant="secondary" />
+            </span>
+          </Header>
+          <ModulesWrapper>
+            <EditBasicInfo
+              resource={resource}
+              anyChangesBasicInfo={anyChangesBasicInfo}
+            />
+            <EditProjectDetails
+              resource={resource}
+              anyChangesProjectDetails={anyChangesProjectDetails}
+            />
+          </ModulesWrapper>
+          <Footer>
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                updateResource.isPending ||
+                (!anyChangesBasicInfo && !anyChangesProjectDetails)
+              }
+            >
+              {updateResource.isPending ? 'Saving...' : 'Save all changes'}
+            </Button>
+          </Footer>
+        </form>
+      </LayoutContainer>
+    </FormProvider>
   )
 }
 const LayoutContainer = styled(Card)`
