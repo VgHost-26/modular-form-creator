@@ -23,7 +23,7 @@ import { toast } from 'react-toastify'
 
 export const useGetResources = (
   params: GetResourcesParams,
-): UseQueryResult<ResourceListResponse, ErrorResponse> => {
+): UseQueryResult<ResourceListResponse, AxiosError<ErrorResponse>> => {
   return useQuery({
     queryKey: ['resourcesList', params],
     queryFn: async ({ signal }) => {
@@ -48,13 +48,15 @@ export const useGetResourceById = (
   })
 }
 
-export const useCreateResources = (
-  params: CreateResourceInput,
-): UseMutationResult<Resource, AxiosError<ErrorResponse>> => {
+export const useCreateResource = (): UseMutationResult<
+  Resource,
+  AxiosError<ErrorResponse>,
+  CreateResourceInput
+> => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationKey: ['resources'],
-    mutationFn: async () => {
+    mutationFn: async (params: CreateResourceInput) => {
       const { data } = await axios.post<Resource>('/api/resources', params)
       return data
     },

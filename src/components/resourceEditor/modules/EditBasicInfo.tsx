@@ -1,9 +1,9 @@
 import { Controller, useFormContext, type FieldPath } from 'react-hook-form'
 import styled from 'styled-components'
-import { Input, Select, Button, Card } from '../../design-system'
-import type { BasicInfo, Resource } from '../../schemes'
-import { useUpdateResource, useUpdateResourceBasicInfo } from '../../api'
-import type { MasterFormValues } from '../resources/ResourceEditor'
+import { Input, Select, Button, Card } from '../../../design-system'
+import type { BasicInfo, Resource } from '../../../schemes'
+import { useUpdateResource, useUpdateResourceBasicInfo } from '../../../api'
+import type { MasterFormValues } from '../ResourceEditor'
 
 type Props = {
   resource: Resource

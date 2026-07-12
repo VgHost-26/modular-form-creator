@@ -1,9 +1,9 @@
 import styled from 'styled-components'
-import { Input, Select, CheckboxGroup, Button, Card } from '../../design-system'
-import type { ProjectDetails, Resource } from '../../schemes'
-import { useUpdateResource, useUpdateResourceProjectDetails } from '../../api'
+import { Input, Select, CheckboxGroup, Button, Card } from '../../../design-system'
+import type { ProjectDetails, Resource } from '../../../schemes'
+import { useUpdateResource, useUpdateResourceProjectDetails } from '../../../api'
 import { Controller, useFormContext, type FieldPath } from 'react-hook-form'
-import type { MasterFormValues } from '../resources/ResourceEditor'
+import type { MasterFormValues } from '../ResourceEditor'
 
 type Props = {
   resource: Resource

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useCreateResources, useGetResources } from '../../api/index.ts'
+import { useCreateResource, useGetResources } from '../../api/index.ts'
 import { Button, Card, Drawer, Input } from '../../design-system/index.ts'
 import { type GetResourcesParams } from '../../schemes/params.ts'
 import styled from 'styled-components'
@@ -26,11 +26,9 @@ const ResourcesListView = () => {
   const [inspectedResourceId, setInspectedResourceId] = useState<number | null>(null)
   const navigate = useNavigate()
 
-  const { data, isSuccess } = useGetResources(resourceFilters)
+  const { data, isSuccess, isLoading, error } = useGetResources(resourceFilters)
 
-  const createResource = useCreateResources({
-    resourceName: newResourceName,
-  })
+  const createResource = useCreateResource()
 
   const resources = useMemo(() => {
     return isSuccess && data ? data.items : []
@@ -57,8 +55,24 @@ const ResourcesListView = () => {
     setResourceFilters((prev) => ({ ...prev, pageSize }))
   }
 
+  if (isLoading) {
+    return (
+      <Message>
+        Loading resources...
+        <progress></progress>
+      </Message>
+    )
+  }
+
+  if (error) {
+    if (error?.response?.status === 404) {
+      return <Message>Resource not found</Message>
+    }
+    return <div>Error loading resource, {error?.response?.data.message}</div>
+  }
+
   return (
-    <>
+    <Wrapper>
       <Drawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
@@ -133,10 +147,18 @@ const ResourcesListView = () => {
           <Message>No resources found, let's create one!</Message>
         )}
       </LayoutContainer>
-    </>
+    </Wrapper>
   )
 }
 
+const Wrapper = styled.div`
+  display: flex;
+  gap: 0.25rem;
+  flex-direction: row;
+  height: 100dvh;
+  width: 100dvw;
+  padding: 0.5rem;
+`
 const LayoutContainer = styled(Card)`
   display: flex;
   flex-direction: column;

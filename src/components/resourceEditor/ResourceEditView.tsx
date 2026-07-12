@@ -33,15 +33,25 @@ const ResourceEditView = () => {
   }
 
   return (
-    <ResourceEditor
-      key={JSON.stringify(resource)}
-      resource={resource}
-      onCancel={() => navigate('/')}
-      onSaved={() => navigate('/')}
-    />
+    <Wrapper>
+      <ResourceEditor
+        key={JSON.stringify(resource)}
+        resource={resource}
+        onCancel={() => navigate('/')}
+        onSaved={() => navigate('/')}
+      />
+    </Wrapper>
   )
 }
 
+const Wrapper = styled.div`
+  display: flex;
+  gap: 0.25rem;
+  flex-direction: row;
+  height: 100dvh;
+  width: 100dvw;
+  padding: 0.5rem;
+`
 const Message = styled.h2`
   display: flex;
   flex-direction: column;
