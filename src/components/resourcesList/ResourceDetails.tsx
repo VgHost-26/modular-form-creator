@@ -31,6 +31,8 @@ const getStatusVariant = (status: Resource['status']) => {
 }
 
 const ResourceDetails = ({ resource, onEdit }: Props) => {
+  const { resourceId, name, status, basicInfo, projectDetails, createdAt, updatedAt } =
+    resource
   return (
     <>
       <Card
@@ -44,10 +46,10 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
       >
         <Header>
           <div>
-            <h2>{resource.name}</h2>
-            <SubtleText>Resource #{resource.resourceId}</SubtleText>
+            <h2>{name}</h2>
+            <SubtleText>Resource #{resourceId}</SubtleText>
           </div>
-          <Badge variant={getStatusVariant(resource.status)}>{resource.status}</Badge>
+          <Badge variant={getStatusVariant(status)}>{status}</Badge>
         </Header>
 
         <Section>
@@ -56,13 +58,13 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
             <Field>
               <Label>Created</Label>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {formatDate(resource.createdAt)}
+                {formatDate(createdAt)}
               </div>
             </Field>
             <Field>
               <Label>Updated</Label>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {formatDate(resource.updatedAt)}
+                {formatDate(updatedAt)}
               </div>
             </Field>
           </Grid>
@@ -72,26 +74,22 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
           <Grid>
             <Field>
               <Label>Resource Name</Label>
-              <Value>
-                {resource.basicInfo.resourceName || 'Not provided'}
-              </Value>
+              <Value>{basicInfo.resourceName || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Owner</Label>
-              <Value>{resource.basicInfo.owner || 'Not provided'}</Value>
+              <Value>{basicInfo.owner || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Email</Label>
-              <Value>{resource.basicInfo.email || 'Not provided'}</Value>
+              <Value>{basicInfo.email || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Priority</Label>
               <Value>
-                {resource.basicInfo.priority ? (
-                  <Badge
-                    variant={resource.basicInfo.priority === 'high' ? 'warning' : 'info'}
-                  >
-                    {resource.basicInfo.priority}
+                {basicInfo.priority ? (
+                  <Badge variant={basicInfo.priority === 'high' ? 'warning' : 'info'}>
+                    {basicInfo.priority}
                   </Badge>
                 ) : (
                   'Not provided'
@@ -104,8 +102,8 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
               }}
             >
               <Label>Description</Label>
-              <Value title={resource.basicInfo.description || 'No description provided'}>
-                {resource.basicInfo.description || 'No description provided'}
+              <Value title={basicInfo.description || 'No description provided'}>
+                {basicInfo.description || 'No description provided'}
               </Value>
             </Field>
           </Grid>
@@ -116,23 +114,21 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
           <Grid>
             <Field>
               <Label>Project Name</Label>
-              <Value>
-                {resource.projectDetails.projectName || 'Not provided'}
-              </Value>
+              <Value>{projectDetails.projectName || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Budget</Label>
-              <Value>{resource.projectDetails.budget || 'Not provided'}</Value>
+              <Value>{projectDetails.budget || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Category</Label>
-              <Value>{resource.projectDetails.category || 'Not provided'}</Value>
+              <Value>{projectDetails.category || 'Not provided'}</Value>
             </Field>
             <Field style={{ gridColumn: 'span 2' }}>
               <Label>Team Members</Label>
               <TeamMembersWrapper>
-                {resource.projectDetails.options.length > 0 ? (
-                  resource.projectDetails.options.map((option) => (
+                {projectDetails.options.length > 0 ? (
+                  projectDetails.options.map((option) => (
                     <Badge key={option} variant="neutral">
                       {option}
                     </Badge>
@@ -154,6 +150,9 @@ const Header = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `
 
 const SubtleText = styled.p`

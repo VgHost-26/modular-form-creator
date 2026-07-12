@@ -1,6 +1,7 @@
 import {
   useMutation,
   useQuery,
+  keepPreviousData,
   type UseMutationResult,
   type UseQueryResult,
   useQueryClient,
@@ -33,6 +34,7 @@ export const useGetResources = (
       })
       return data
     },
+    placeholderData: keepPreviousData,
   })
 }
 
