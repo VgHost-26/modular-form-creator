@@ -73,16 +73,16 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
             <Field>
               <Label>Resource Name</Label>
               <Value>
-                {resource.basicInfo.resourceName || 'No resource name provided'}
+                {resource.basicInfo.resourceName || 'Not provided'}
               </Value>
             </Field>
             <Field>
               <Label>Owner</Label>
-              <Value>{resource.basicInfo.owner || 'No owner provided'}</Value>
+              <Value>{resource.basicInfo.owner || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Email</Label>
-              <Value>{resource.basicInfo.email || 'No email provided'}</Value>
+              <Value>{resource.basicInfo.email || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Priority</Label>
@@ -94,7 +94,7 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
                     {resource.basicInfo.priority}
                   </Badge>
                 ) : (
-                  'No priority set'
+                  'Not provided'
                 )}
               </Value>
             </Field>
@@ -117,16 +117,16 @@ const ResourceDetails = ({ resource, onEdit }: Props) => {
             <Field>
               <Label>Project Name</Label>
               <Value>
-                {resource.projectDetails.projectName || 'No project name provided'}
+                {resource.projectDetails.projectName || 'Not provided'}
               </Value>
             </Field>
             <Field>
               <Label>Budget</Label>
-              <Value>{resource.projectDetails.budget || 'No budget provided'}</Value>
+              <Value>{resource.projectDetails.budget || 'Not provided'}</Value>
             </Field>
             <Field>
               <Label>Category</Label>
-              <Value>{resource.projectDetails.category || 'No category provided'}</Value>
+              <Value>{resource.projectDetails.category || 'Not provided'}</Value>
             </Field>
             <Field style={{ gridColumn: 'span 2' }}>
               <Label>Team Members</Label>

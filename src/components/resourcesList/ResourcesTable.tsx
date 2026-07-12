@@ -41,14 +41,14 @@ const ResourcesTable = ({ resources, onRowClick }: Props) => {
                 title="Basic Info"
                 variant={checkResourceProgress(resource) >= 1 ? 'success' : 'neutral'}
               >
-                X
+                {checkResourceProgress(resource) >= 1 ? '✓' : 'X'}
               </Badge>
               —
               <Badge
                 title="Project Details"
                 variant={checkResourceProgress(resource) >= 2 ? 'success' : 'neutral'}
               >
-                X
+                {checkResourceProgress(resource) >= 2 ? '✓' : 'X'}
               </Badge>
             </td>
             <td>
